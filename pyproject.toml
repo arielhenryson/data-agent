@@ -1,7 +1,7 @@
 [project]
 name = "nltsql"
 version = "0.1.0"
-dependencies = ["python-dotenv"]
+dependencies = ["python-dotenv", "psycopg2-binary"]
 
 [build-system]
 requires = ["setuptools"]
