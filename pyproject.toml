@@ -1,7 +1,7 @@
 [project]
 name = "nltsql"
 version = "0.1.0"
-dependencies = []
+dependencies = ["python-dotenv"]
 
 [build-system]
 requires = ["setuptools"]

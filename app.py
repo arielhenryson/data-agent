@@ -1,5 +1,11 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 def main():
-    print("Hello, World!")
+    foo = os.getenv("FOO")
+    print(f"The value of FOO is: {foo}")
 
 if __name__ == "__main__":
     main()
