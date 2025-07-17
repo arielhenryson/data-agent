@@ -29,5 +29,5 @@ This is a Python application that translates natural language to SQL queries.
 ### Running the Application
 
 ```bash
-python app.py
+chainlit run app.py
 ```
