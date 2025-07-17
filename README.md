@@ -16,9 +16,14 @@ This is a Python application that translates natural language to SQL queries.
     conda activate nltsql
     ```
 
-3.  **Install dependencies:**
+3.  **Install uv:**
     ```bash
-    pip install -r requirements.txt
+    pip install uv
+    ```
+
+4.  **Install dependencies:**
+    ```bash
+    uv pip install -e .
     ```
 
 ### Running the Application
