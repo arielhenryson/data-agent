@@ -1,4 +1,4 @@
-# NLtSQL
+# Data Agent
 
 This is a Python application that translates natural language to SQL queries.
 
@@ -8,12 +8,12 @@ This is a Python application that translates natural language to SQL queries.
 
 1.  **Create a new conda environment:**
     ```bash
-    conda create --name nltsql python=3.11
+    conda create --name data-agent python=3.11
     ```
 
 2.  **Activate the environment:**
     ```bash
-    conda activate nltsql
+    conda activate data-agent
     ```
 
 3.  **Install uv:**
