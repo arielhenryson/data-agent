@@ -31,3 +31,11 @@ This is a Python application that translates natural language to SQL queries.
 ```bash
 chainlit run app.py
 ```
+
+## Docker
+
+To start the PostgreSQL and pgAdmin services, run the following command:
+
+```bash
+docker-compose up -d
+```
