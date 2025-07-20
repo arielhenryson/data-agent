@@ -32,6 +32,14 @@ This is a Python application that translates natural language to SQL queries.
 chainlit run app.py
 ```
 
+## Database
+
+To populate the database with mock data, run the following command:
+
+```bash
+python -m scripts.populate_db
+```
+
 ## Docker
 
 To start the PostgreSQL and pgAdmin services, run the following command:
