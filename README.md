@@ -45,5 +45,5 @@ python -m scripts.populate_db
 To start the PostgreSQL and pgAdmin services, run the following command:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
