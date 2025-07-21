@@ -58,3 +58,14 @@ To start the PostgreSQL and pgAdmin services, run the following command:
 ```bash
 docker compose up -d
 ```
+
+## Prefect
+
+To deploy and run the test flow, run the following commands:
+
+```bash
+prefect server start &
+python flows/test.py
+```
+
+You can view the flow run in the Prefect UI at http://127.0.0.1:4200.
