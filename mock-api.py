@@ -1,112 +1,79 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import List, Optional
+import random
+from datetime import datetime, timezone
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
 
 # --- OpenAPI Metadata ---
 # This information will be displayed in the Swagger UI documentation.
 description = """
-A mock API for managing users and their financial transactions. 🚀
+A mock API for assessing the creditworthiness of bank customers. 🏦
 
-You can:
-* **Retrieve all users**
-* **Retrieve a single user by ID**
-* **Retrieve all transactions** (with optional filtering by user)
-* **Retrieve all transactions for a specific user**
+You can submit a customer's name and receive a randomly generated credit profile,
+including a score, risk level, and a financing recommendation. 🚀
 """
 
 app = FastAPI(
-    title="Mock Transaction API",
+    title="Creditworthiness Assessment API",
     description=description,
-    version="1.0.0",
+    version="2.0.0",
     contact={
         "name": "API Support",
         "url": "http://example.com/contact",
         "email": "support@example.com",
     },
-    license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
-    },
 )
 
-# --- Pydantic Models ---
-# These models define the structure of the data for requests and responses.
+# --- Pydantic Model ---
+# This model defines the structure of the data for the response.
 
-class Transaction(BaseModel):
-    id: int
-    user_id: int
-    amount: float
-    description: str
+class Creditworthiness(BaseModel):
+    customer_name: str = Field(..., example="Ariel Henryson", description="The name of the customer being assessed.")
+    credit_score: int = Field(..., example=785, description="A score from 300 (very poor) to 850 (excellent).")
+    risk_level: str = Field(..., example="Low", description="Categorical risk assessment (Low, Medium, High).")
+    recommendation: str = Field(..., example="Approve Loan", description="Recommended action based on the assessment.")
+    last_updated: datetime = Field(..., description="UTC timestamp of when the assessment was generated.")
 
-class User(BaseModel):
-    id: int
-    name: str
-    email: str
-    transactions: List[Transaction] = []
 
-# --- Mock Database ---
-# In-memory data to simulate a database.
+# --- API Endpoint ---
 
-mock_users_db = {
-    1: User(id=1, name="Ariel Henryson", email="ariel@example.com"),
-    2: User(id=2, name="Jane Doe", email="jane@example.com"),
-}
-
-mock_transactions_db = {
-    1: Transaction(id=1, user_id=1, amount=100.50, description="Groceries"),
-    2: Transaction(id=2, user_id=1, amount=25.00, description="Coffee"),
-    3: Transaction(id=3, user_id=2, amount=500.00, description="Rent"),
-    4: Transaction(id=4, user_id=1, amount=75.20, description="Dinner"),
-}
-
-# --- API Endpoints ---
-
-@app.get("/users", response_model=List[User], tags=["Users"])
-def get_users():
+@app.get("/credit-score/", response_model=Creditworthiness, tags=["Credit Scoring"])
+def get_credit_score(
+    customer_name: str = Query(
+        ...,
+        min_length=3,
+        max_length=50,
+        title="Customer Name",
+        description="The full name of the customer to assess. Must be between 3 and 50 characters.",
+        example="Jane Doe"
+    )
+):
     """
-    Retrieve a list of all users. The transactions for each user are not populated here.
+    Retrieves a randomly generated creditworthiness assessment for a given customer.
     """
-    return list(mock_users_db.values())
+    # Generate a random credit score (FICO-like range)
+    score = random.randint(300, 850)
 
-@app.get("/users/{user_id}", response_model=User, tags=["Users"])
-def get_user(user_id: int):
-    """
-    Retrieve a single user by their ID.
+    # Determine risk level and recommendation based on the score
+    if score >= 740:
+        risk_level = "Low"
+        recommendation = "Approve Loan"
+    elif score >= 670:
+        risk_level = "Medium"
+        recommendation = "Manual Review Required"
+    else:
+        risk_level = "High"
+        recommendation = "Decline Loan"
 
-    This endpoint will also populate the user's transactions list.
-    """
-    user = mock_users_db.get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Create the response object
+    assessment = Creditworthiness(
+        customer_name=customer_name,
+        credit_score=score,
+        risk_level=risk_level,
+        recommendation=recommendation,
+        last_updated=datetime.now(timezone.utc)
+    )
 
-    # Populate user's transactions
-    user.transactions = [t for t in mock_transactions_db.values() if t.user_id == user_id]
-    return user
-
-@app.get("/transactions", response_model=List[Transaction], tags=["Transactions"])
-def get_transactions(user_id: Optional[int] = None):
-    """
-    Retrieve a list of all transactions.
-
-    - You can optionally filter the transactions by providing a `user_id`.
-    """
-    if user_id is not None:
-        # Check if user exists before filtering
-        if user_id not in mock_users_db:
-             raise HTTPException(status_code=404, detail=f"User with id {user_id} not found.")
-        return [t for t in mock_transactions_db.values() if t.user_id == user_id]
-    return list(mock_transactions_db.values())
-
-@app.get("/users/{user_id}/transactions", response_model=List[Transaction], tags=["Users", "Transactions"])
-def get_user_transactions(user_id: int):
-    """
-    Retrieve all transactions for a specific user.
-
-    This provides a direct way to get transactions for a user without fetching the user's full details.
-    """
-    if user_id not in mock_users_db:
-        raise HTTPException(status_code=404, detail="User not found")
-    return [t for t in mock_transactions_db.values() if t.user_id == user_id]
+    return assessment
 
 # To run this application:
 # 1. Save the code as a Python file (e.g., `main.py`).
@@ -118,6 +85,4 @@ def get_user_transactions(user_id: int):
 
 if __name__ == "__main__":
     import uvicorn
-    # Note: Running with uvicorn.run() is mainly for development.
-    # For production, it's better to use the command line as shown above.
     uvicorn.run(app, host="0.0.0.0", port=8001)

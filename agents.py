@@ -51,8 +51,10 @@ def run_sql_query(query: str) -> str:
     """
     Run a SQL query against the database and return the results.
     Args:
-        query: The SQL query string to execute.
+        query: The SQL query string to execute (run all on the public schema).
     """
+
+    print(query)
     try:
         db = PostgresDB()
         db.connect()

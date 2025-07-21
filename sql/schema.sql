@@ -1,88 +1,57 @@
+-- Drop tables if they exist to prevent errors on re-creation
+DROP TABLE IF EXISTS transactions CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
 
--- Drop tables if they exist
-DROP TABLE IF EXISTS "Tasks" CASCADE;
-DROP TABLE IF EXISTS "Projects" CASCADE;
-DROP TABLE IF EXISTS "Teams" CASCADE;
-DROP TABLE IF EXISTS "Users" CASCADE;
-DROP TABLE IF EXISTS "Organizations" CASCADE;
-
--- Create Organizations table
-CREATE TABLE "Organizations" (
-    "OrganizationID" SERIAL PRIMARY KEY,
-    "Name" VARCHAR(255) NOT NULL,
-    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- Create customers table
+-- This table stores basic information about each bank customer.
+CREATE TABLE customers (
+    customer_id SERIAL PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone_number VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create Users table
-CREATE TABLE "Users" (
-    "UserID" SERIAL PRIMARY KEY,
-    "Username" VARCHAR(255) NOT NULL UNIQUE,
-    "Email" VARCHAR(255) NOT NULL UNIQUE,
-    "OrganizationID" INTEGER,
-    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("OrganizationID") REFERENCES "Organizations"("OrganizationID")
+-- Create transactions table
+-- This table will hold records of all financial transactions for customers.
+CREATE TABLE transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    amount NUMERIC(10, 2) NOT NULL, -- Using NUMERIC for precise currency values
+    type VARCHAR(50) NOT NULL, -- e.g., 'credit' for income, 'debit' for expenses
+    description VARCHAR(255) NOT NULL,
+    transaction_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
 );
 
--- Create Teams table
-CREATE TABLE "Teams" (
-    "TeamID" SERIAL PRIMARY KEY,
-    "Name" VARCHAR(255) NOT NULL,
-    "OrganizationID" INTEGER NOT NULL,
-    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("OrganizationID") REFERENCES "Organizations"("OrganizationID")
-);
+-- Populate customers table with sample data
+INSERT INTO customers (full_name, email, phone_number) VALUES
+('Ariel Henryson', 'ariel.h@example.com', '555-0101'),
+('Jane Doe', 'jane.d@example.com', '555-0102'),
+('John Smith', 'john.s@example.com', '555-0103'),
+('Emily White', 'emily.w@example.com', '555-0104');
 
--- Create Projects table
-CREATE TABLE "Projects" (
-    "ProjectID" SERIAL PRIMARY KEY,
-    "Name" VARCHAR(255) NOT NULL,
-    "TeamID" INTEGER NOT NULL,
-    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("TeamID") REFERENCES "Teams"("TeamID")
-);
+-- Populate transactions table with sample data
+-- This data corresponds to the customers created above.
 
--- Create Tasks table
-CREATE TABLE "Tasks" (
-    "TaskID" SERIAL PRIMARY KEY,
-    "ProjectID" INTEGER NOT NULL,
-    "AssigneeID" INTEGER,
-    "Title" VARCHAR(255) NOT NULL,
-    "Description" TEXT,
-    "Status" VARCHAR(50) NOT NULL,
-    "DueDate" DATE,
-    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY ("ProjectID") REFERENCES "Projects"("ProjectID"),
-    FOREIGN KEY ("AssigneeID") REFERENCES "Users"("UserID")
-);
+-- Transactions for Ariel Henryson (customer_id = 1)
+INSERT INTO transactions (customer_id, amount, type, description, transaction_date) VALUES
+(1, 2500.00, 'credit', 'Monthly Salary', '2025-07-15 12:00:00+00'),
+(1, 150.75, 'debit', 'Grocery Shopping', '2025-07-18 09:30:00+00'),
+(1, 45.50, 'debit', 'Restaurant Dinner', '2025-07-20 19:45:00+00');
 
--- Populate Organizations
-INSERT INTO "Organizations" ("Name") VALUES
-('Innovate Inc.'),
-('Synergy Corp');
+-- Transactions for Jane Doe (customer_id = 2)
+INSERT INTO transactions (customer_id, amount, type, description, transaction_date) VALUES
+(2, 1200.00, 'credit', 'Freelance Project Payment', '2025-07-19 14:00:00+00'),
+(2, 89.99, 'debit', 'Online Shopping', '2025-07-19 15:10:00+00'),
+(2, 500.00, 'debit', 'Rent Payment', '2025-07-01 10:00:00+00');
 
--- Populate Users
-INSERT INTO "Users" ("Username", "Email", "OrganizationID") VALUES
-('johndoe', 'johndoe@innovate.com', 1),
-('janesmith', 'janesmith@innovate.com', 1),
-('peterjones', 'peterjones@synergy.com', 2);
+-- Transactions for John Smith (customer_id = 3)
+INSERT INTO transactions (customer_id, amount, type, description, transaction_date) VALUES
+(3, 3000.00, 'credit', 'Paycheck', '2025-07-15 11:00:00+00'),
+(3, 25.00, 'debit', 'Coffee Shop', '2025-07-21 08:00:00+00'),
+(3, 50.00, 'debit', 'Gasoline', '2025-07-20 17:00:00+00');
 
--- Populate Teams
-INSERT INTO "Teams" ("Name", "OrganizationID") VALUES
-('Development', 1),
-('Marketing', 1),
-('Engineering', 2);
-
--- Populate Projects
-INSERT INTO "Projects" ("Name", "TeamID") VALUES
-('Project Alpha', 1),
-('Project Beta', 1),
-('Marketing Campaign Q3', 2),
-('New Feature Launch', 3);
-
--- Populate Tasks
-INSERT INTO "Tasks" ("ProjectID", "AssigneeID", "Title", "Description", "Status", "DueDate") VALUES
-(1, 1, 'Design database schema', 'Design the initial database schema for Project Alpha.', 'In Progress', '2025-08-15'),
-(1, 2, 'Develop API endpoints', 'Develop REST API endpoints for user management.', 'To Do', '2025-08-20'),
-(2, 1, 'Setup staging environment', 'Set up the staging environment for Project Beta.', 'Done', '2025-07-30'),
-(3, 2, 'Create ad copy', 'Write ad copy for the Q3 marketing campaign.', 'In Progress', '2025-08-05'),
-(4, 3, 'Implement new feature', 'Implement the core logic for the new feature.', 'To Do', '2025-09-01');
+-- Transactions for Emily White (customer_id = 4)
+INSERT INTO transactions (customer_id, amount, type, description, transaction_date) VALUES
+(4, 75.20, 'debit', 'Bookstore', '2025-07-17 16:20:00+00');
