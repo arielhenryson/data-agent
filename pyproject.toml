@@ -5,7 +5,9 @@ dependencies = [
     "python-dotenv", 
     "psycopg2-binary", 
     "pydantic-ai[logfire]",
-    "chainlit"
+    "chainlit",
+    "fastapi",
+    "uvicorn"
 ]
 
 [tool.setuptools]

@@ -32,6 +32,17 @@ This is a Python application that translates natural language to SQL queries.
 chainlit run app.py
 ```
 
+### Running the Mock API Server
+
+To start the mock API server, run the following command:
+
+```bash
+python mock-api.py
+```
+
+The API will be available at `http://0.0.0.0:8001`.
+
+
 ## Database
 
 To populate the database with mock data, run the following command:
