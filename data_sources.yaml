@@ -1,0 +1,39 @@
+# ---------------------------------------------------------------------------
+# Data Source Configuration
+# ---------------------------------------------------------------------------
+# This file defines all the data sources (databases, APIs) that the AI
+# agent can connect to.
+#
+# For each data source, you must provide:
+#   - name: A unique identifier for the agent to use.
+#   - type: The kind of data source. Supported types are 'postgres' and 'openapi'.
+#   - description: A clear, natural language description that helps the AI
+#                  decide when to use this source.
+#
+# Additional fields depend on the type:
+#   - For 'postgres': The system will look for environment variables prefixed
+#     with the source's name (e.g., SALES_DB_HOST for a source named 'sales_db').
+#   - For 'openapi': You must provide the 'spec_url' (the URL to the
+#     openapi.json file) and the 'base_url' for making API calls.
+# ---------------------------------------------------------------------------
+
+data_sources:
+  # --- Example 1: PostgreSQL Database ---
+  - name: "BANK"
+    type: "postgres"
+    description: "The main production PostgreSQL database"
+    credentials:
+      host_env: "BANK_DB_HOST"
+      port_env: "BANK_DB_PORT"
+      dbname_env: "BANK_DB_NAME"
+      user_env: "BANK_DB_USER"
+      password_env: "BANK_DB_PASSWORD"
+
+  # --- Example 4: Credit Assessment API ---
+  - name: "CREDIT_API"
+    type: "openapi"
+    description: "An API for assessing the creditworthiness of bank customers. Use this to get a credit score, risk level, and financing recommendation."
+    # TODO: Update with the correct URL where this API's specification is hosted.
+    spec_url: "http://0.0.0.0:8001/openapi.json"
+    # TODO: Update with the correct base URL for making API calls.
+    base_url: "http://0.0.0.0:8001"
