@@ -1,7 +1,7 @@
 import requests
 from pydantic_ai import Agent
 import os
-
+import json
 import subprocess
 import sys
 import psycopg2
@@ -17,7 +17,6 @@ agent = Agent(
         "Once you have identified the target, you MUST provide the `data_source_name` to all other tools (`run_sql_query`, `get_db_schema_and_sample_data`, etc.)."
     )
 )
-
 @agent.tool
 def list_available_data_sources(run_context) -> str:
     """Lists all available data sources from the configuration file."""
@@ -101,24 +100,45 @@ def run_api_query(data_source_name: str, endpoint: str, method: str = "GET", dat
     except (ValueError, requests.exceptions.RequestException) as e:
         return f"Error executing API query for '{data_source_name}': {e}"
 
+# ✨ New Tool Added
+@agent.tool_plain
+def get_data_source_credentials(data_source_name: str) -> str:
+    """
+    Gets the credential mapping for a given data source.
+    This returns a JSON string showing which environment variables correspond to
+    database connection parameters like host, port, user, etc.
+    Use this to know which environment variables to use when writing a Prefect flow.
+
+    Args:
+        data_source_name (str): The name of the data source as defined in the YAML config.
+    """
+    try:
+        source_config = data_source_manager.get_source(data_source_name)
+        creds = source_config.get('credentials')
+        if not creds:
+            return f"Error: No credential mapping found for data source '{data_source_name}'."
+        return json.dumps(creds, indent=2)
+    except ValueError as e:
+        return f"Error: {e}"
+
+# 🛠️ Docstring Fixed
 @agent.tool_plain
 def save_prefect_flow(flow_name: str, flow_content: str) -> str:
     """
     Saves a generated Prefect flow to the 'flows' directory as a Python file.
-    The LLM should first generate the complete Python code for the flow before calling this tool.
 
-    The generated code MUST:
-    1. Include necessary imports from 'prefect' (@task, @flow).
-    2. If database access is required, it MUST load credentials from a .env file.
-       - It should import `os` and `from dotenv import load_dotenv`.
-       - It must call `load_dotenv(dotenv_path="../.env")` to load variables from the .env file
-         located one directory above the 'flows' directory.
-       - Access credentials using the specific environment variable names defined in the `data_sources.yaml` file.
-         For example, to connect to the 'bank_db', the code must use the environment variables specified
-         under its `credentials` section in the YAML (e.g., os.getenv("BANK_HOST"), os.getenv("BANK_DATABASE"), etc.).
-       - The python-dotenv library is assumed to be installed in the environment.
-    3. Define tasks with the @task decorator and a flow with the @flow decorator.
-    4. Include a main execution block (`if __name__ == "__main__":`) to run the flow.
+    The LLM must follow these steps to generate the flow_content:
+    1.  **If database access is needed, first call the `get_data_source_credentials` tool**
+        with the appropriate `data_source_name`. This will provide the correct environment
+        variable names for the database connection.
+    2.  Generate the complete Python code for the flow. The code MUST:
+        a. Include necessary imports like `from prefect import task, flow`, `os`, and `from dotenv import load_dotenv`.
+        b. Call `load_dotenv(dotenv_path="../.env")` to load variables from the .env file.
+        c. Use the specific environment variable names obtained in step 1 to access credentials
+           (e.g., `os.getenv("BANK_DB_HOST")`, `os.getenv("BANK_DB_USER")`, etc.).
+        d. Define tasks with the `@task` decorator and a flow with the `@flow` decorator.
+        e. Include a main execution block (`if __name__ == "__main__":`) to run the flow.
+    3.  Call this tool (`save_prefect_flow`) with the `flow_name` and the generated `flow_content`.
 
     Args:
         flow_name (str): The name for the flow file (e.g., 'my_etl_flow').

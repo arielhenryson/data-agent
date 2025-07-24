@@ -17,6 +17,13 @@ class DataSourceManager:
             self.sources = self._load_sources()
             self._initialized = True
 
+    def get_source(self, name: str):
+        """Returns the configuration for a named data source."""
+        source = self.sources.get(name)
+        if not source:
+            raise ValueError(f"Data source '{name}' not found in configuration.")
+        return source
+
     def _load_sources(self):
         try:
             with open(self.config_path, 'r') as f:
