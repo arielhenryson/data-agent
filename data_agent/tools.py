@@ -1,28 +1,18 @@
-import requests
-from pydantic_ai import Agent
 import os
+import sys
 import json
 import subprocess
-import sys
+from typing import Optional
+
 import psycopg2
-from data_source_manager import DataSourceManager
-data_source_manager = DataSourceManager("data_sources.yaml")
+import requests
 
-agent = Agent(
-    'google-gla:gemini-2.5-flash',
-    system_prompt=(
-        "You are a helpful AI assistant. Your goal is to answer the user's query by interacting with configured data sources. "
-        "First, you must determine which data source to use based on the user's prompt and the available sources. "
-        "If you are unsure which data source to use, call the `list_available_data_sources` tool to see the options. "
-        "Once you have identified the target, you MUST provide the `data_source_name` to all other tools (`run_sql_query`, `get_db_schema_and_sample_data`, etc.)."
-    )
-)
-@agent.tool
-def list_available_data_sources(run_context) -> str:
+from .data_source_manager import DataSourceManager
+
+def list_available_data_sources() -> str:
     """Lists all available data sources from the configuration file."""
-    return data_source_manager.list_sources_as_text()
+    return DataSourceManager().list_sources_as_text()
 
-@agent.tool_plain
 def get_db_schema_and_sample_data(data_source_name: str) -> str:
     """
     Get the database schema and sample data for a specific PostgreSQL data source.
@@ -30,7 +20,7 @@ def get_db_schema_and_sample_data(data_source_name: str) -> str:
         data_source_name (str): The name of the data source as defined in the YAML config.
     """
     try:
-        db = data_source_manager.get_db_connection(source_name=data_source_name)
+        db = DataSourceManager().get_db_connection(source_name=data_source_name)
         schema_info = db.get_schema_as_text(ignore_tables=["vectors"])
         sample_data = db.get_table_samples_as_text(ignore_tables=["vectors"])
         return schema_info + "\n" + sample_data
@@ -40,7 +30,6 @@ def get_db_schema_and_sample_data(data_source_name: str) -> str:
         if 'db' in locals() and db.conn:
             db.disconnect()
 
-@agent.tool_plain
 def run_sql_query(data_source_name: str, query: str) -> str:
     """
     Run a SQL query against a specific PostgreSQL data source.
@@ -49,7 +38,7 @@ def run_sql_query(data_source_name: str, query: str) -> str:
         query (str): The SQL query string to execute.
     """
     try:
-        db = data_source_manager.get_db_connection(source_name=data_source_name)
+        db = DataSourceManager().get_db_connection(source_name=data_source_name)
         result = db.query(query)
         return str(result)
     except (ValueError, ConnectionError, psycopg2.Error) as e:
@@ -57,8 +46,7 @@ def run_sql_query(data_source_name: str, query: str) -> str:
     finally:
         if 'db' in locals() and db.conn:
             db.disconnect()
-            
-@agent.tool_plain
+
 def get_api_schema(data_source_name: str) -> str:
     """
     Get the OpenAPI schema for a specific API data source.
@@ -66,7 +54,7 @@ def get_api_schema(data_source_name: str) -> str:
         data_source_name (str): The name of the API data source as defined in the YAML config.
     """
     try:
-        source_config = data_source_manager.get_source(data_source_name)
+        source_config = DataSourceManager().get_source(data_source_name)
         if source_config['type'] != 'openapi':
             return f"Error: Data source '{data_source_name}' is not an OpenAPI source."
         
@@ -76,8 +64,9 @@ def get_api_schema(data_source_name: str) -> str:
     except (ValueError, requests.exceptions.RequestException) as e:
         return f"Error fetching API schema for '{data_source_name}': {e}"
 
-@agent.tool_plain
-def run_api_query(data_source_name: str, endpoint: str, method: str = "GET", data: dict = None) -> str:
+from typing import Optional
+
+def run_api_query(data_source_name: str, endpoint: str, method: str = "GET", data: Optional[dict] = None) -> str:
     """
     Run a query against a specific API data source.
     Args:
@@ -87,7 +76,7 @@ def run_api_query(data_source_name: str, endpoint: str, method: str = "GET", dat
         data (dict): The JSON data for POST/PUT requests.
     """
     try:
-        source_config = data_source_manager.get_source(data_source_name)
+        source_config = DataSourceManager().get_source(data_source_name)
         if source_config['type'] != 'openapi':
             return f"Error: Data source '{data_source_name}' is not an OpenAPI source."
         
@@ -100,8 +89,6 @@ def run_api_query(data_source_name: str, endpoint: str, method: str = "GET", dat
     except (ValueError, requests.exceptions.RequestException) as e:
         return f"Error executing API query for '{data_source_name}': {e}"
 
-# ✨ New Tool Added
-@agent.tool_plain
 def get_data_source_credentials(data_source_name: str) -> str:
     """
     Gets the credential mapping for a given data source.
@@ -113,7 +100,7 @@ def get_data_source_credentials(data_source_name: str) -> str:
         data_source_name (str): The name of the data source as defined in the YAML config.
     """
     try:
-        source_config = data_source_manager.get_source(data_source_name)
+        source_config = DataSourceManager().get_source(data_source_name)
         creds = source_config.get('credentials')
         if not creds:
             return f"Error: No credential mapping found for data source '{data_source_name}'."
@@ -121,8 +108,6 @@ def get_data_source_credentials(data_source_name: str) -> str:
     except ValueError as e:
         return f"Error: {e}"
 
-# 🛠️ Docstring Fixed
-@agent.tool_plain
 def save_prefect_flow(flow_name: str, flow_content: str) -> str:
     """
     Saves a generated Prefect flow to the 'flows' directory as a Python file.
@@ -156,7 +141,7 @@ def save_prefect_flow(flow_name: str, flow_content: str) -> str:
     except Exception as e:
         return f"❌ An error occurred while saving the Prefect flow: {e}"
 
-@agent.tool_plain
+
 def run_prefect_flow(flow_name: str) -> str:
     """Executes a previously saved Prefect flow Python file."""
     FLOW_DIR = "flows"

@@ -1,6 +1,6 @@
 import yaml
 import os
-from db import PostgresDB
+from .db import PostgresDB
 
 class DataSourceManager:
     """Loads and manages data sources from a YAML configuration file."""

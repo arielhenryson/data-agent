@@ -1,10 +1,10 @@
 [project]
 name = "data-agent"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
     "python-dotenv", 
     "psycopg2-binary", 
-    "pydantic-ai[logfire]",
+    "google-adk", 
     "chainlit",
     "fastapi",
     "uvicorn",
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["agents", "app", "db", "instrument"]
+py-modules = ["agents", "app", "db"]
 
 [build-system]
 requires = ["setuptools"]

@@ -16,14 +16,9 @@ This is a Python application that translates natural language to SQL queries.
     conda activate data-agent
     ```
 
-3.  **Install uv:**
+3.  **Install dependencies:**
     ```bash
-    pip install uv
-    ```
-
-4.  **Install dependencies:**
-    ```bash
-    uv pip install -e .
+    pip install -e .
     ```
 
 ### Running the Application
