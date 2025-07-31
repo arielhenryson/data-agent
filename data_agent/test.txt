@@ -1,0 +1,7 @@
+for each customers in the bank db get the credit score
+
+
+
+
+
+plan [data exposure] -> query_agent [data query] -> reporter [data presentation]
