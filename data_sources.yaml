@@ -30,22 +30,29 @@ data_sources:
   #     password_env: "BANK_DB_PASSWORD"
 
   # --- Example 4: Credit Assessment API ---
-  - name: "CREDIT_API"
-    type: "openapi"
-    description: "An API for assessing the creditworthiness of bank customers. Use this to get a credit score, risk level, and financing recommendation."
-    # TODO: Update with the correct URL where this API's specification is hosted.
-    spec_url: "http://0.0.0.0:8001/openapi.json"
-    # TODO: Update with the correct base URL for making API calls.
-    base_url: "http://0.0.0.0:8001"
+  # - name: "CREDIT_API"
+  #   type: "openapi"
+  #   description: "An API for assessing the creditworthiness of bank customers. Use this to get a credit score, risk level, and financing recommendation."
+  #   # TODO: Update with the correct URL where this API's specification is hosted.
+  #   spec_url: "http://0.0.0.0:8001/openapi.json"
+  #   # TODO: Update with the correct base URL for making API calls.
+  #   base_url: "http://0.0.0.0:8001"
 
-  - name: "LOCAL_BANK_DB"
-    type: "sqlite"
-    description: "A local SQLite database containing customer and transaction data for development and testing."
-    # The path to the SQLite database file.
-    db_file: "mydatabase.db"
+  # - name: "LOCAL_BANK_DB"
+  #   type: "sqlite"
+  #   description: "A local SQLite database containing customer and transaction data for development and testing."
+  #   # The path to the SQLite database file.
+  #   db_file: "mydatabase.db"
 
   - name: "BLACKLIST"
-    type: "json"
+    type: "file"
     description: "A local JSON file containing a list of blacklisted names that are not allowed to be used in the bank."
     # The path can be a local file path or a URL.
     path: "mock_json_local_file.json"
+
+
+  - name: "MOCK_API"
+    type: "file"
+    description: "home page of mock api"
+    # The path can be a local file path or a URL.
+    path: "https://mockapi.io/"

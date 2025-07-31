@@ -4,7 +4,7 @@ from .tools import (
     get_db_schema_and_sample_data,
     get_data_source_credentials,
     get_api_schema,
-    read_json_data_source,
+    read_file_data_source,
 )
 from .sub_agents.query_agent.agent import query_agent
 
@@ -26,7 +26,7 @@ root_agent = Agent(
         get_db_schema_and_sample_data,
         get_data_source_credentials,
         get_api_schema,
-        read_json_data_source
+        read_file_data_source
     ],
     sub_agents=[
         query_agent,
