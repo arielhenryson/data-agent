@@ -1,5 +1,66 @@
 import psycopg2
 from psycopg2.extensions import AsIs
+import sqlite3
+
+class SQLiteDB:
+    """A wrapper for a SQLite database connection."""
+    def __init__(self, db_file: str):
+        """
+        Initializes the connection to the SQLite database.
+        
+        Args:
+            db_file (str): The path to the SQLite database file.
+        """
+        try:
+            self.db_file = db_file
+            self.conn = sqlite3.connect(db_file)
+            self.cursor = self.conn.cursor()
+            print(f"Successfully connected to SQLite database: {db_file}")
+        except sqlite3.Error as e:
+            raise ConnectionError(f"Failed to connect to SQLite database at {db_file}: {e}")
+
+    def get_schema_as_text(self) -> str:
+        """
+        Retrieves the schema of all tables in the database and formats it as a string.
+        
+        Returns:
+            str: A formatted string describing the table schemas.
+        """
+        try:
+            self.cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='table';")
+            tables = self.cursor.fetchall()
+            if not tables:
+                return "No tables found in the database."
+            
+            schema_str = "Database Schema:\n\n"
+            for table_name, create_sql in tables:
+                schema_str += f"-- Schema for table: {table_name}\n"
+                schema_str += f"{create_sql};\n\n"
+            return schema_str
+        except sqlite3.Error as e:
+            return f"Error retrieving schema: {e}"
+
+    def execute_query(self, query: str):
+        """
+        Executes a given SQL query and fetches all results.
+        
+        Args:
+            query (str): The SQL query to execute.
+            
+        Returns:
+            list: A list of tuples representing the query results.
+        """
+        try:
+            self.cursor.execute(query)
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            raise ValueError(f"Error executing query: {e}")
+
+    def close(self):
+        """Closes the database connection."""
+        if self.conn:
+            self.conn.close()
+            print(f"SQLite connection to {self.db_file} closed.")
 
 class PostgresDB:
     """A reusable class to interact with a specific PostgreSQL database."""

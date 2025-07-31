@@ -5,6 +5,7 @@ import subprocess
 from typing import Optional
 
 import psycopg2
+import sqlite3 # Added for SQLite support
 import requests
 
 from .data_source_manager import DataSourceManager
@@ -15,37 +16,40 @@ def list_available_data_sources() -> str:
 
 def get_db_schema_and_sample_data(data_source_name: str) -> str:
     """
-    Get the database schema and sample data for a specific PostgreSQL data source.
+    Get the database schema and sample data for a specific data source.
     Args:
         data_source_name (str): The name of the data source as defined in the YAML config.
     """
+    db = None
     try:
-        db = DataSourceManager().get_db_connection(source_name=data_source_name)
-        schema_info = db.get_schema_as_text(ignore_tables=["vectors"])
-        sample_data = db.get_table_samples_as_text(ignore_tables=["vectors"])
-        return schema_info + "\n" + sample_data
-    except (ValueError, ConnectionError, psycopg2.Error) as e:
-        return f"Error: {e}"
-    finally:
-        if 'db' in locals() and db.conn:
-            db.disconnect()
+        manager = DataSourceManager()
+        source_config = manager.get_source(data_source_name)
+        db = manager.get_db_connection(source_name=data_source_name)
+        
+        db_type = source_config.get('type')
 
-def run_sql_query(data_source_name: str, query: str) -> str:
-    """
-    Run a SQL query against a specific PostgreSQL data source.
-    Args:
-        data_source_name (str): The name of the data source as defined in the YAML config.
-        query (str): The SQL query string to execute.
-    """
-    try:
-        db = DataSourceManager().get_db_connection(source_name=data_source_name)
-        result = db.query(query)
-        return str(result)
-    except (ValueError, ConnectionError, psycopg2.Error) as e:
+        if db_type == 'postgres':
+            schema_info = db.get_schema_as_text(ignore_tables=["vectors"])
+            sample_data = db.get_table_samples_as_text(ignore_tables=["vectors"])
+            return schema_info + "\n" + sample_data
+        elif db_type == 'sqlite':
+            # The SQLiteDB class provides the schema directly.
+            # A sample data function could be added to the SQLiteDB class if needed.
+            schema_info = db.get_schema_as_text()
+            return schema_info
+        else:
+            return f"Error: Data source '{data_source_name}' is not a supported database type for schema retrieval."
+
+    except (ValueError, ConnectionError, psycopg2.Error, sqlite3.Error) as e:
         return f"Error: {e}"
     finally:
-        if 'db' in locals() and db.conn:
-            db.disconnect()
+        if db:
+            # Gracefully close either a Postgres or SQLite connection
+            if hasattr(db, 'disconnect'):
+                db.disconnect()
+            elif hasattr(db, 'close'):
+                db.close()
+
 
 def get_api_schema(data_source_name: str) -> str:
     """
@@ -63,8 +67,6 @@ def get_api_schema(data_source_name: str) -> str:
         return response.text
     except (ValueError, requests.exceptions.RequestException) as e:
         return f"Error fetching API schema for '{data_source_name}': {e}"
-
-from typing import Optional
 
 def run_api_query(data_source_name: str, endpoint: str, method: str = "GET", data: Optional[dict] = None) -> str:
     """

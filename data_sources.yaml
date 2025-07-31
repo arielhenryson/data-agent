@@ -19,15 +19,15 @@
 
 data_sources:
   # --- Example 1: PostgreSQL Database ---
-  - name: "BANK"
-    type: "postgres"
-    description: "The main production PostgreSQL database"
-    credentials:
-      host_env: "BANK_DB_HOST"
-      port_env: "BANK_DB_PORT"
-      dbname_env: "BANK_DB_NAME"
-      user_env: "BANK_DB_USER"
-      password_env: "BANK_DB_PASSWORD"
+  # - name: "BANK"
+  #   type: "postgres"
+  #   description: "The main production PostgreSQL database"
+  #   credentials:
+  #     host_env: "BANK_DB_HOST"
+  #     port_env: "BANK_DB_PORT"
+  #     dbname_env: "BANK_DB_NAME"
+  #     user_env: "BANK_DB_USER"
+  #     password_env: "BANK_DB_PASSWORD"
 
   # --- Example 4: Credit Assessment API ---
   - name: "CREDIT_API"
@@ -37,3 +37,9 @@ data_sources:
     spec_url: "http://0.0.0.0:8001/openapi.json"
     # TODO: Update with the correct base URL for making API calls.
     base_url: "http://0.0.0.0:8001"
+
+  - name: "LOCAL_BANK_DB"
+    type: "sqlite"
+    description: "A local SQLite database containing customer and transaction data for development and testing."
+    # The path to the SQLite database file.
+    db_file: "mydatabase.db"

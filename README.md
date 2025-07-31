@@ -43,7 +43,7 @@ The API will be available at `http://0.0.0.0:8001`.
 To populate the database with mock data, run the following command:
 
 ```bash
-python -m scripts.populate_db
+python -m scripts.populate_sqllight_db
 ```
 
 ## Docker

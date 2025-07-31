@@ -1,6 +1,6 @@
 import yaml
 import os
-from .db import PostgresDB
+from .db import PostgresDB, SQLiteDB
 
 class DataSourceManager:
     """Loads and manages data sources from a YAML configuration file."""
@@ -16,13 +16,6 @@ class DataSourceManager:
             self.config_path = config_path
             self.sources = self._load_sources()
             self._initialized = True
-
-    def get_source(self, name: str):
-        """Returns the configuration for a named data source."""
-        source = self.sources.get(name)
-        if not source:
-            raise ValueError(f"Data source '{name}' not found in configuration.")
-        return source
 
     def _load_sources(self):
         try:
@@ -56,25 +49,35 @@ class DataSourceManager:
         return output
 
     def get_db_connection(self, source_name: str):
-        """Creates and returns a PostgresDB connection for a given source."""
+        """Creates and returns a database connection for a given source."""
         source_config = self.get_source(source_name)
-        if source_config.get('type') != 'postgres':
-            raise ValueError(f"Data source '{source_name}' is not a PostgreSQL database.")
-        
-        cred_keys = source_config.get('credentials')
-        if not cred_keys:
-            raise ValueError(f"Credential mapping not defined for data source '{source_name}' in the YAML file.")
+        db_type = source_config.get('type')
 
-        db_params = {
-            "host": os.getenv(cred_keys.get('host_env')),
-            "port": os.getenv(cred_keys.get('port_env')),
-            "dbname": os.getenv(cred_keys.get('dbname_env')),
-            "user": os.getenv(cred_keys.get('user_env')),
-            "password": os.getenv(cred_keys.get('password_env'))
-        }
-        
-        missing_params = [k for k, v in db_params.items() if v is None]
-        if missing_params:
-            raise ConnectionError(f"Missing environment variables for data source '{source_name}'. Please set: {missing_params}")
+        if db_type == 'postgres':
+            cred_keys = source_config.get('credentials')
+            if not cred_keys:
+                raise ValueError(f"Credential mapping not defined for data source '{source_name}' in the YAML file.")
 
-        return PostgresDB(**db_params)
+            db_params = {
+                "host": os.getenv(cred_keys.get('host_env')),
+                "port": os.getenv(cred_keys.get('port_env')),
+                "dbname": os.getenv(cred_keys.get('dbname_env')),
+                "user": os.getenv(cred_keys.get('user_env')),
+                "password": os.getenv(cred_keys.get('password_env'))
+            }
+            
+            missing_params = [k for k, v in db_params.items() if v is None]
+            if missing_params:
+                raise ConnectionError(f"Missing environment variables for data source '{source_name}'. Please set: {missing_params}")
+
+            return PostgresDB(**db_params)
+        
+        elif db_type == 'sqlite':
+            db_file = source_config.get('db_file')
+            if not db_file:
+                raise ValueError(f"Configuration for SQLite source '{source_name}' is missing the 'db_file' path.")
+            return SQLiteDB(db_file=db_file)
+            
+        else:
+            raise ValueError(f"Unsupported database type '{db_type}' for source '{source_name}'.")
+
