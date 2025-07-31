@@ -2,6 +2,7 @@ from google.adk.agents import Agent
 from .tools import (
     run_sql_query,
     run_api_query,
+    read_json_data_source,
 )
 
 query_agent = Agent(
@@ -15,6 +16,7 @@ query_agent = Agent(
     tools=[
         run_sql_query,
         run_api_query,
+        read_json_data_source,
     ],
     
 )

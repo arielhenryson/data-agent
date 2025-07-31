@@ -14,6 +14,38 @@ def list_available_data_sources() -> str:
     """Lists all available data sources from the configuration file."""
     return DataSourceManager().list_sources_as_text()
 
+def read_json_data_source(data_source_name: str) -> str:
+    """
+    Reads data from a JSON data source, which can be a local file or a URL.
+    Args:
+        data_source_name (str): The name of the JSON data source as defined in the YAML config.
+    """
+    try:
+        manager = DataSourceManager()
+        source_config = manager.get_source(data_source_name)
+        
+        if source_config.get('type') != 'json':
+            return f"Error: Data source '{data_source_name}' is not a JSON source."
+            
+        path = source_config.get('path')
+        if not path:
+            return f"Error: JSON data source '{data_source_name}' is missing the 'path' attribute in the configuration."
+
+        # Check if the path is a URL
+        if path.startswith('http://') or path.startswith('https://'):
+            response = requests.get(path)
+            response.raise_for_status() # Raise an exception for bad status codes
+            json_data = response.json()
+        else: # Treat as a local file path
+            with open(path, 'r') as f:
+                json_data = json.load(f)
+        
+        # Return the data as a formatted JSON string
+        return json.dumps(json_data, indent=2)
+
+    except (ValueError, requests.exceptions.RequestException, FileNotFoundError, json.JSONDecodeError) as e:
+        return f"Error reading JSON data source '{data_source_name}': {e}"
+
 def get_db_schema_and_sample_data(data_source_name: str) -> str:
     """
     Get the database schema and sample data for a specific data source.

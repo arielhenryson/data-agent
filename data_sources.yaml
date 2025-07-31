@@ -43,3 +43,9 @@ data_sources:
     description: "A local SQLite database containing customer and transaction data for development and testing."
     # The path to the SQLite database file.
     db_file: "mydatabase.db"
+
+  - name: "BLACKLIST"
+    type: "json"
+    description: "A local JSON file containing a list of blacklisted names that are not allowed to be used in the bank."
+    # The path can be a local file path or a URL.
+    path: "mock_json_local_file.json"

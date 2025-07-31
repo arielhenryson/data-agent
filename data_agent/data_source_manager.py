@@ -53,6 +53,9 @@ class DataSourceManager:
         source_config = self.get_source(source_name)
         db_type = source_config.get('type')
 
+        if db_type not in ['postgres', 'sqlite']:
+            raise ValueError(f"Data source '{source_name}' is of type '{db_type}', not a supported database. Use the appropriate tool for this data source type (e.g., 'read_json_data_source').")
+
         if db_type == 'postgres':
             cred_keys = source_config.get('credentials')
             if not cred_keys:
@@ -77,7 +80,3 @@ class DataSourceManager:
             if not db_file:
                 raise ValueError(f"Configuration for SQLite source '{source_name}' is missing the 'db_file' path.")
             return SQLiteDB(db_file=db_file)
-            
-        else:
-            raise ValueError(f"Unsupported database type '{db_type}' for source '{source_name}'.")
-
